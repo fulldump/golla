@@ -1,0 +1,4 @@
+# Golla dependencies for project 'PROJECT_TEMPLATE'
+
+# Add golla.go itself (master) branch
+git@github.com:fulldump/golla>golla.go -> golla.go
