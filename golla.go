@@ -12,17 +12,24 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 var update bool
+var parallel bool
 
 func init() {
 	flag.BoolVar(&update, "update", false,
 		"Force download all dependencies again")
+	flag.BoolVar(&parallel, "parallel", true,
+		"Download all dependencies in parallel")
+
 	flag.Parse()
 }
 
 func main() {
+
+	clones := sync.WaitGroup{}
 
 	ForEachLine("./golla", func(line string) (err error) {
 
@@ -47,12 +54,26 @@ func main() {
 		repo := strings.TrimSpace(parts[0])
 		dest := strings.TrimSpace(parts[1])
 
+		if parallel {
+			clones.Add(1)
+			go func(repo, dest string) {
+				defer clones.Done()
+				if err = Clone(repo, dest); nil != err {
+					fmt.Printf("Error cloning %s: %s\n", repo, err)
+					return
+				}
+			}(repo, dest)
+			return
+		}
+
 		if err = Clone(repo, dest); nil != err {
 			return
 		}
 
 		return
 	})
+
+	clones.Wait()
 
 }
 
